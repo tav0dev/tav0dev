@@ -10,12 +10,14 @@ The supplied screenshot shows [Andrew Grant's profile repository](https://github
 
 This composition has fixed columns and short fields, so it uses a small SVG generator without runtime dependencies. Canvas samples the photograph only when regenerating the portrait. The committed SVGs and ASCII text are sufficient to rebuild the artwork without the original photo or a browser.
 
+The portrait preserves the source photograph's tonal direction. Background removal starts from near-white edge pixels, preserving enclosed facial highlights. Every visible character run has an explicit horizontal position, so SVG whitespace normalization cannot collapse the portrait's proportions. The display name uses Gustavo de Oliveira, his preferred professional name.
+
 ## Files
 
 - `README.md`: public profile copy and links.
 - `assets/profile.svg`: desktop composition.
 - `assets/profile-mobile.svg`: stacked composition for viewports up to 600 px.
-- `assets/portrait.txt`: generated ASCII portrait, with 46 rows and up to 68 columns.
+- `assets/portrait.txt`: generated ASCII portrait, with 82 rows and up to 120 columns. Light areas use denser glyphs on the dark panel, preserving the photograph's tonal direction.
 - `scripts/build-profile.mjs`: editable profile fields, colors, and layout.
 - `scripts/portrait.html`: local Canvas conversion used by the generator.
 - `docs/ats-review.md`: local Portuguese editorial review, excluded from publication.

@@ -6,19 +6,87 @@
 <script>
   const photo = new Image();
   photo.onload = () => {
-    const columns = 68;
-    const rows = 46;
+    const columns = 120;
+    const rows = 82;
     const canvas = document.createElement('canvas');
     canvas.width = columns;
     canvas.height = rows;
     const context = canvas.getContext('2d', { willReadFrequently: true });
-    context.fillStyle = '#fff';
-    context.fillRect(0, 0, columns, rows);
+    // Remove only near-white pixels connected to the edge of the source crop.
+    // White highlights enclosed by the face stay visible rather than becoming holes.
+    const source = document.createElement('canvas');
+    source.width = Math.round(photo.width * 0.76);
+    source.height = Math.round(photo.height * 0.87);
+    const sourceContext = source.getContext('2d', { willReadFrequently: true });
+    sourceContext.drawImage(photo, photo.width * 0.075, photo.height * 0.13,
+      photo.width * 0.76, photo.height * 0.87, 0, 0, source.width, source.height);
+    const imageData = sourceContext.getImageData(0, 0, source.width, source.height);
+    const sourcePixels = imageData.data;
+    const background = new Uint8Array(source.width * source.height);
+    const queue = new Int32Array(background.length);
+    let start = 0;
+    let end = 0;
+    const enqueue = (index) => {
+      if (background[index]) return;
+      const p = index * 4;
+      const luma = 0.2126 * sourcePixels[p] + 0.7152 * sourcePixels[p + 1] + 0.0722 * sourcePixels[p + 2];
+      if (luma <= 247) return;
+      background[index] = 1;
+      queue[end++] = index;
+    };
+    for (let x = 0; x < source.width; x++) {
+      enqueue(x);
+      enqueue((source.height - 1) * source.width + x);
+    }
+    for (let y = 0; y < source.height; y++) {
+      enqueue(y * source.width);
+      enqueue(y * source.width + source.width - 1);
+    }
+    while (start < end) {
+      const index = queue[start++];
+      const x = index % source.width;
+      if (x > 0) enqueue(index - 1);
+      if (x < source.width - 1) enqueue(index + 1);
+      if (index >= source.width) enqueue(index - source.width);
+      if (index < background.length - source.width) enqueue(index + source.width);
+    }
+    for (let index = 0; index < background.length; index++) {
+      if (background[index]) sourcePixels[index * 4 + 3] = 0;
+    }
+    sourceContext.putImageData(imageData, 0, 0);
     context.imageSmoothingQuality = 'high';
-    // Crop white margins while preserving the head, neck, and shoulders.
-    context.drawImage(photo, photo.width * 0.075, photo.height * 0.13,
-      photo.width * 0.76, photo.height * 0.87, 0, 0, columns, rows);
+    context.drawImage(source, 0, 0, columns, rows);
     const pixels = context.getImageData(0, 0, columns, rows).data;
+    // Keep the connected subject; discard isolated background noise after sampling.
+    const components = new Int32Array(columns * rows);
+    const cells = new Int32Array(components.length);
+    let component = 0;
+    let largest = 0;
+    let largestSize = 0;
+    for (let seed = 0; seed < components.length; seed++) {
+      if (components[seed] || pixels[seed * 4 + 3] < 80) continue;
+      component++;
+      let head = 0;
+      let tail = 0;
+      const visit = (index) => {
+        if (components[index] || pixels[index * 4 + 3] < 80) return;
+        components[index] = component;
+        cells[tail++] = index;
+      };
+      visit(seed);
+      while (head < tail) {
+        const index = cells[head++];
+        const x = index % columns;
+        if (x > 0) visit(index - 1);
+        if (x < columns - 1) visit(index + 1);
+        if (index >= columns) visit(index - columns);
+        if (index < components.length - columns) visit(index + columns);
+      }
+      if (tail > largestSize) {
+        largestSize = tail;
+        largest = component;
+      }
+    }
     const ramp = ' .,:;i1tfLCG08@';
     const result = [];
     for (let y = 0; y < rows; y++) {
@@ -26,8 +94,11 @@
       for (let x = 0; x < columns; x++) {
         const p = (y * columns + x) * 4;
         const luma = 0.2126 * pixels[p] + 0.7152 * pixels[p + 1] + 0.0722 * pixels[p + 2];
-        const density = Math.max(0, Math.min(1, (247 - luma) / 218));
-        line += ramp[Math.round(Math.pow(density, 0.92) * (ramp.length - 1))];
+        // Light glyphs on a dark background need the original, positive tones.
+        // The previous inverse ramp made dark hair bright and washed out facial highlights.
+        const alpha = components[y * columns + x] === largest ? pixels[p + 3] / 255 : 0;
+        const density = Math.max(0, Math.min(1, (luma - 20) / 225)) * alpha;
+        line += ramp[Math.round(density * (ramp.length - 1))];
       }
       result.push(line);
     }

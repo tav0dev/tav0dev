@@ -1,9 +1,9 @@
 <picture>
   <source media="(max-width: 600px)" srcset="./assets/profile-mobile.svg">
-  <img src="./assets/profile.svg" width="100%" alt="ASCII portrait of Gustavo Cuba. AI Engineer and co-founder at Outpost Technologies, based in São Paulo, Brazil. Focused on agentic AI, RAG and product engineering, working with Python, TypeScript, SQL and AWS.">
+  <img src="./assets/profile.svg" width="100%" alt="ASCII portrait of Gustavo de Oliveira. AI Engineer and co-founder at Outpost Technologies, based in São Paulo, Brazil. Focused on agentic AI, RAG and product engineering, working with Python, TypeScript, SQL and AWS.">
 </picture>
 
-# Gustavo Cuba
+# Gustavo de Oliveira
 
 **AI Engineer building agents, integrations, and the products around them.**
 
