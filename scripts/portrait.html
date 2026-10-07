@@ -107,12 +107,45 @@
       }
     }
     const ramp = ' .,:;i1tfLCG08@';
+    const luminance = new Float32Array(columns * rows);
+    for (let index = 0; index < luminance.length; index++) {
+      const p = index * 4;
+      luminance[index] = 0.2126 * pixels[p] + 0.7152 * pixels[p + 1] + 0.0722 * pixels[p + 2];
+    }
+    // Feathered regions are tuned to the supplied photo. Increase existing
+    // shadow detail around the eye and beard rather than drawing new features.
+    const region = (x, y, cx, cy, rx, ry) => {
+      const distance = ((x - cx) / rx) ** 2 + ((y - cy) / ry) ** 2;
+      return Math.max(0, 1 - distance) ** 2;
+    };
+    const localMean = (x, y) => {
+      let sum = 0;
+      let weight = 0;
+      for (let dy = -3; dy <= 3; dy++) {
+        for (let dx = -4; dx <= 4; dx++) {
+          const sx = x + dx;
+          const sy = y + dy;
+          if (sx < 0 || sy < 0 || sx >= columns || sy >= rows) continue;
+          const index = sy * columns + sx;
+          if (components[index] !== largest) continue;
+          sum += luminance[index];
+          weight++;
+        }
+      }
+      return weight ? sum / weight : luminance[y * columns + x];
+    };
     const result = [];
     for (let y = 0; y < rows; y++) {
       let line = '';
       for (let x = 0; x < columns; x++) {
         const p = (y * columns + x) * 4;
-        const luma = 0.2126 * pixels[p] + 0.7152 * pixels[p + 1] + 0.0722 * pixels[p + 2];
+        const originalLuma = luminance[y * columns + x];
+        const photoX = (0.075 + (x + 0.5) / columns * 0.76) * 1080;
+        const photoY = (0.13 + (y + 0.5) / rows * 0.87) * 1080;
+        const eye = region(photoX, photoY, 661, 415, 108, 58);
+        const beard = region(photoX, photoY, 680, 628, 140, 105);
+        const shadow = Math.min(0, originalLuma - localMean(x, y));
+        const luma = originalLuma + shadow * (eye * 2.3 + beard * 1.8) - beard * 12;
         // Light glyphs on a dark background need the original, positive tones.
         // The previous inverse ramp made dark hair bright and washed out facial highlights.
         const alpha = components[y * columns + x] === largest ? pixels[p + 3] / 255 : 0;

@@ -12,6 +12,8 @@ This composition has fixed columns and short fields, so it uses a small SVG gene
 
 The portrait preserves the source photograph's tonal direction. Background removal starts from near-white edge pixels. A protection polygon tuned to the supplied photograph keeps the bright forehead from being removed where it touches the white background. Dark retained subject cells use at least a dot; spaces are reserved for the background. Every visible character run has an explicit horizontal position, so SVG whitespace normalization cannot collapse the portrait's proportions. The display name uses Gustavo de Oliveira, his preferred professional name.
 
+Softly feathered regions around the eye and beard enhance existing shadow detail using local luminance contrast. Their positions are tuned to the supplied portrait and need adjustment when replacing the photograph.
+
 ## Files
 
 - `README.md`: public profile copy and links.
