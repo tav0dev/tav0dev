@@ -10,7 +10,7 @@ The supplied screenshot shows [Andrew Grant's profile repository](https://github
 
 This composition has fixed columns and short fields, so it uses a small SVG generator without runtime dependencies. Canvas samples the photograph only when regenerating the portrait. The committed SVGs and ASCII text are sufficient to rebuild the artwork without the original photo or a browser.
 
-The portrait preserves the source photograph's tonal direction. Background removal starts from near-white edge pixels, preserving enclosed facial highlights. Every visible character run has an explicit horizontal position, so SVG whitespace normalization cannot collapse the portrait's proportions. The display name uses Gustavo de Oliveira, his preferred professional name.
+The portrait preserves the source photograph's tonal direction. Background removal starts from near-white edge pixels. A protection polygon tuned to the supplied photograph keeps the bright forehead from being removed where it touches the white background. Dark retained subject cells use at least a dot; spaces are reserved for the background. Every visible character run has an explicit horizontal position, so SVG whitespace normalization cannot collapse the portrait's proportions. The display name uses Gustavo de Oliveira, his preferred professional name.
 
 ## Files
 

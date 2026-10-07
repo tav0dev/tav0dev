@@ -22,6 +22,24 @@
       photo.width * 0.76, photo.height * 0.87, 0, 0, source.width, source.height);
     const imageData = sourceContext.getImageData(0, 0, source.width, source.height);
     const sourcePixels = imageData.data;
+    // This photograph's bright forehead touches the white background. Protect
+    // its interior in source-photo coordinates before flood-filling the background.
+    const protectedSkin = document.createElement('canvas');
+    protectedSkin.width = source.width;
+    protectedSkin.height = source.height;
+    const skinContext = protectedSkin.getContext('2d', { willReadFrequently: true });
+    const forehead = [[495, 260], [570, 233], [645, 235], [690, 252],
+      [710, 287], [729, 325], [743, 350], [718, 380], [605, 397], [496, 370]];
+    skinContext.beginPath();
+    forehead.forEach(([x, y], index) => {
+      const px = x / 1080 * photo.width - photo.width * 0.075;
+      const py = y / 1080 * photo.height - photo.height * 0.13;
+      if (index === 0) skinContext.moveTo(px, py);
+      else skinContext.lineTo(px, py);
+    });
+    skinContext.closePath();
+    skinContext.fill();
+    const protectedPixels = skinContext.getImageData(0, 0, source.width, source.height).data;
     const background = new Uint8Array(source.width * source.height);
     const queue = new Int32Array(background.length);
     let start = 0;
@@ -29,6 +47,7 @@
     const enqueue = (index) => {
       if (background[index]) return;
       const p = index * 4;
+      if (protectedPixels[p + 3]) return;
       const luma = 0.2126 * sourcePixels[p] + 0.7152 * sourcePixels[p + 1] + 0.0722 * sourcePixels[p + 2];
       if (luma <= 247) return;
       background[index] = 1;
@@ -97,8 +116,11 @@
         // Light glyphs on a dark background need the original, positive tones.
         // The previous inverse ramp made dark hair bright and washed out facial highlights.
         const alpha = components[y * columns + x] === largest ? pixels[p + 3] / 255 : 0;
-        const density = Math.max(0, Math.min(1, (luma - 20) / 225)) * alpha;
-        line += ramp[Math.round(density * (ramp.length - 1))];
+        const density = Math.pow(Math.max(0, Math.min(1, (luma - 20) / 225)), 0.8) * alpha;
+        const glyph = Math.round(density * (ramp.length - 1));
+        // Spaces belong to the background. Even the darkest retained subject
+        // cells get a dot so shadows cannot become empty holes in the portrait.
+        line += alpha === 0 ? ' ' : ramp[Math.max(1, glyph)];
       }
       result.push(line);
     }
