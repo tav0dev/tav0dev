@@ -33,10 +33,14 @@ if (photo) {
     ], { encoding: 'utf8', timeout: 20000, maxBuffer: 8 * 1024 * 1024, stdio: ['ignore', 'pipe', 'pipe'] });
     const result = output.match(/<pre id="result">([^<]+)<\/pre>/);
     if (!result) throw new Error('The browser did not return an ASCII portrait.');
-    const rows = JSON.parse(result[1]);
-    if (!Array.isArray(rows) || rows.length !== 82 || rows.some(row => typeof row !== 'string' || row.length !== 120)) {
+    const { rows, tones } = JSON.parse(result[1]);
+    if (!Array.isArray(rows) || rows.length !== 110 || rows.some(row => typeof row !== 'string' || row.length !== 160)) {
       throw new Error('Unexpected ASCII portrait dimensions.');
     }
+    if (!Array.isArray(tones) || tones.length !== 110 || tones.some(row => row.length !== 160)) {
+      throw new Error('Unexpected portrait tone dimensions.');
+    }
+    writeFileSync(join(assets, 'portrait-tones.json'), `${JSON.stringify(tones)}\n`);
     writeFileSync(join(assets, 'portrait.txt'), `${rows.map(row => row.trimEnd()).join('\n')}\n`);
   } finally {
     rmSync(work, { recursive: true, force: true });
@@ -44,6 +48,7 @@ if (photo) {
 }
 
 const portrait = readFileSync(join(assets, 'portrait.txt'), 'utf8').trimEnd().split('\n');
+const tones = JSON.parse(readFileSync(join(assets, 'portrait-tones.json'), 'utf8'));
 const escape = (value) => String(value).replaceAll('&', '&amp;').replaceAll('<', '&lt;').replaceAll('>', '&gt;').replaceAll('"', '&quot;');
 const mono = 'ui-monospace, SFMono-Regular, Menlo, Consolas, &quot;Liberation Mono&quot;, monospace';
 const text = (x, y, value, size = 15, fill = '#c7d5e2', attrs = '') =>
@@ -51,13 +56,25 @@ const text = (x, y, value, size = 15, fill = '#c7d5e2', attrs = '') =>
 const ink = '#8bc6df';
 const gold = '#d6b981';
 
-function ascii(x, y, cellWidth, lineHeight, size) {
-  // Position each visible run explicitly. SVG whitespace handling must not move
-  // the face's features when a row starts with spaces or contains empty cells.
-  return `<g fill="url(#portrait-ink)" font-size="${size}" font-weight="600">${portrait.flatMap((row, index) =>
-    [...row.matchAll(/\S+/g)].map(match =>
-      `<text x="${x + match.index * cellWidth}" y="${y + index * lineHeight}" textLength="${match[0].length * cellWidth}" lengthAdjust="spacingAndGlyphs">${escape(match[0])}</text>`)
-  ).join('\n')}</g>`;
+function ascii(x, y, width = 360) {
+  // Match the photograph's crop aspect ratio, independently of font metrics.
+  const cellWidth = width / 160;
+  const lineHeight = width * (0.87 / 0.76) / 110;
+  const fontSize = cellWidth / 0.6;
+  const color = (luma) => {
+    const brightness = 0.15 + 0.85 * luma / 255;
+    return '#' + [210, 229, 239].map(channel =>
+      Math.round(channel * brightness).toString(16).padStart(2, '0')).join('');
+  };
+  // Each cell keeps its source luminance. No eye, beard, or facial shadow edits.
+  return `<g font-family="Liberation Mono, monospace" font-size="${fontSize}" font-weight="400">${portrait.map((row, index) => {
+    let spans = '';
+    for (let column = 0; column < row.length; column++) {
+      if (row[column] === ' ') continue;
+      spans += `<tspan x="${(x + column * cellWidth).toFixed(3)}" fill="${color(tones[index][column])}">${escape(row[column])}</tspan>`;
+    }
+    return spans ? `<text y="${(y + index * lineHeight).toFixed(3)}">${spans}</text>` : '';
+  }).join('\n')}</g>`;
 }
 
 function shell(width, height, content) {
@@ -92,7 +109,7 @@ const stack = [
 const row = (y, label, value, x = 424, valueX = 552, size = 15) =>
   `${text(x, y, `${label}:`, size, gold)}${text(valueX, y, value, size)}`;
 const desktop = [
-  ascii(26, 81, 3.0, 4.8, 6.0),
+  ascii(26, 78),
   text(26, 506, 'GUSTAVO DE OLIVEIRA', 12, '#92a6b7', 'letter-spacing="2"'),
   text(424, 89, 'tav0dev@github', 19, ink, 'font-weight="600"'),
   text(424, 112, '──────────────────────────────────────', 15, '#3b5062'),
@@ -113,7 +130,7 @@ const compactFields = [
   ['Cloud', 'AWS · Supabase · Vercel'],
 ];
 const mobile = [
-  ascii(117, 74, 3.0, 4.8, 6.0),
+  ascii(120, 69),
   text(40, 500, 'tav0dev@github', 23, ink, 'font-weight="600"'),
   text(40, 533, 'Gustavo de Oliveira', 29, '#e1e9ef', 'font-weight="600"'),
   ...compactFields.map(([label, value], index) => row(578 + index * 33, label, value, 40, 173, 17)),

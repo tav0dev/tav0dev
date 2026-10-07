@@ -6,8 +6,8 @@
 <script>
   const photo = new Image();
   photo.onload = () => {
-    const columns = 120;
-    const rows = 82;
+    const columns = 160;
+    const rows = 110;
     const canvas = document.createElement('canvas');
     canvas.width = columns;
     canvas.height = rows;
@@ -112,40 +112,14 @@
       const p = index * 4;
       luminance[index] = 0.2126 * pixels[p] + 0.7152 * pixels[p + 1] + 0.0722 * pixels[p + 2];
     }
-    // Feathered regions are tuned to the supplied photo. Increase existing
-    // shadow detail around the eye and beard rather than drawing new features.
-    const region = (x, y, cx, cy, rx, ry) => {
-      const distance = ((x - cx) / rx) ** 2 + ((y - cy) / ry) ** 2;
-      return Math.max(0, 1 - distance) ** 2;
-    };
-    const localMean = (x, y) => {
-      let sum = 0;
-      let weight = 0;
-      for (let dy = -3; dy <= 3; dy++) {
-        for (let dx = -4; dx <= 4; dx++) {
-          const sx = x + dx;
-          const sy = y + dy;
-          if (sx < 0 || sy < 0 || sx >= columns || sy >= rows) continue;
-          const index = sy * columns + sx;
-          if (components[index] !== largest) continue;
-          sum += luminance[index];
-          weight++;
-        }
-      }
-      return weight ? sum / weight : luminance[y * columns + x];
-    };
     const result = [];
+    const tones = [];
     for (let y = 0; y < rows; y++) {
       let line = '';
+      const rowTones = [];
       for (let x = 0; x < columns; x++) {
         const p = (y * columns + x) * 4;
-        const originalLuma = luminance[y * columns + x];
-        const photoX = (0.075 + (x + 0.5) / columns * 0.76) * 1080;
-        const photoY = (0.13 + (y + 0.5) / rows * 0.87) * 1080;
-        const eye = region(photoX, photoY, 661, 415, 108, 58);
-        const beard = region(photoX, photoY, 680, 628, 140, 105);
-        const shadow = Math.min(0, originalLuma - localMean(x, y));
-        const luma = originalLuma + shadow * (eye * 2.3 + beard * 1.8) - beard * 12;
+        const luma = luminance[y * columns + x];
         // Light glyphs on a dark background need the original, positive tones.
         // The previous inverse ramp made dark hair bright and washed out facial highlights.
         const alpha = components[y * columns + x] === largest ? pixels[p + 3] / 255 : 0;
@@ -154,10 +128,12 @@
         // Spaces belong to the background. Even the darkest retained subject
         // cells get a dot so shadows cannot become empty holes in the portrait.
         line += alpha === 0 ? ' ' : ramp[Math.max(1, glyph)];
+        rowTones.push(alpha === 0 ? 0 : Math.round(luma));
       }
       result.push(line);
+      tones.push(rowTones);
     }
-    document.getElementById('result').textContent = JSON.stringify(result);
+    document.getElementById('result').textContent = JSON.stringify({ rows: result, tones });
   };
   photo.src = '__PHOTO_DATA_URL__';
 </script>

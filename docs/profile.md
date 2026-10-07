@@ -8,18 +8,17 @@ The supplied screenshot shows [Andrew Grant's profile repository](https://github
 
 [Pretext](https://github.com/chenglou/pretext) is a JavaScript/TypeScript text measurement and layout library that can support DOM, Canvas, and SVG output. It could help with a more complex interactive composition. GitHub [sanitizes README HTML and removes scripts](https://github.com/github/markup), so an interactive React or Pretext demo would need its own page; it cannot execute inside the profile README.
 
-This composition has fixed columns and short fields, so it uses a small SVG generator without runtime dependencies. Canvas samples the photograph only when regenerating the portrait. The committed SVGs and ASCII text are sufficient to rebuild the artwork without the original photo or a browser.
+This composition has fixed columns and short fields, so it uses a small SVG generator without runtime dependencies. Canvas samples the photograph only when regenerating the portrait. The committed SVGs, ASCII text, and sampled tones are sufficient to rebuild the artwork without the original photo or a browser.
 
-The portrait preserves the source photograph's tonal direction. Background removal starts from near-white edge pixels. A protection polygon tuned to the supplied photograph keeps the bright forehead from being removed where it touches the white background. Dark retained subject cells use at least a dot; spaces are reserved for the background. Every visible character run has an explicit horizontal position, so SVG whitespace normalization cannot collapse the portrait's proportions. The display name uses Gustavo de Oliveira, his preferred professional name.
-
-Softly feathered regions around the eye and beard enhance existing shadow detail using local luminance contrast. Their positions are tuned to the supplied portrait and need adjustment when replacing the photograph.
+The portrait uses a uniform conversion of the source photograph's luminance. Both character density and ink brightness follow the sampled tones; no regional contrast adjustment is applied to the eye, beard, or other facial features. Its displayed aspect ratio matches the source crop. Background removal starts from near-white edge pixels; a protection polygon tuned to the supplied photograph keeps the bright forehead from being removed where it touches the white background. Dark retained subject cells use at least a dot, and spaces are reserved for the background. Every visible character has an explicit horizontal position, so SVG whitespace normalization cannot collapse the portrait's proportions. The display name uses Gustavo de Oliveira, his preferred professional name.
 
 ## Files
 
 - `README.md`: public profile copy and links.
 - `assets/profile.svg`: desktop composition.
 - `assets/profile-mobile.svg`: stacked composition for viewports up to 600 px.
-- `assets/portrait.txt`: generated ASCII portrait, with 82 rows and up to 120 columns. Light areas use denser glyphs on the dark panel, preserving the photograph's tonal direction.
+- `assets/portrait.txt`: generated ASCII portrait, with 110 rows and up to 160 columns.
+- `assets/portrait-tones.json`: sampled source luminance for each cell. The renderer derives character colors from these values, preserving the photograph's tonal direction.
 - `scripts/build-profile.mjs`: editable profile fields, colors, and layout.
 - `scripts/portrait.html`: local Canvas conversion used by the generator.
 - `docs/ats-review.md`: local Portuguese editorial review, excluded from publication.
@@ -34,7 +33,7 @@ Requires Node.js 18 or newer. No package installation is needed.
 node scripts/build-profile.mjs
 ```
 
-To change the portrait, also install Chromium or provide the executable path for a compatible browser. The current crop is tuned for the supplied square portrait; adjust the crop in `scripts/portrait.html` if using a different photo.
+To change the portrait, also install Chromium or provide the executable path for a compatible browser. The current crop and forehead protection are tuned for the supplied square portrait; adjust them in `scripts/portrait.html` if using a different photo.
 
 ```sh
 node scripts/build-profile.mjs --photo references/1768696782714.png
