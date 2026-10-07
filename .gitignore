@@ -1,0 +1,8 @@
+# Local source material; generated ASCII artwork lives in assets/.
+/references/
+/docs/ats-review.md
+*:Zone.Identifier
+
+# Local tooling and operating-system files.
+node_modules/
+.DS_Store

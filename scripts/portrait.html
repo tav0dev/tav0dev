@@ -1,0 +1,38 @@
+<!doctype html>
+<html lang="en">
+<meta charset="utf-8">
+<title>Local photo to ASCII conversion</title>
+<pre id="result"></pre>
+<script>
+  const photo = new Image();
+  photo.onload = () => {
+    const columns = 68;
+    const rows = 46;
+    const canvas = document.createElement('canvas');
+    canvas.width = columns;
+    canvas.height = rows;
+    const context = canvas.getContext('2d', { willReadFrequently: true });
+    context.fillStyle = '#fff';
+    context.fillRect(0, 0, columns, rows);
+    context.imageSmoothingQuality = 'high';
+    // Crop white margins while preserving the head, neck, and shoulders.
+    context.drawImage(photo, photo.width * 0.075, photo.height * 0.13,
+      photo.width * 0.76, photo.height * 0.87, 0, 0, columns, rows);
+    const pixels = context.getImageData(0, 0, columns, rows).data;
+    const ramp = ' .,:;i1tfLCG08@';
+    const result = [];
+    for (let y = 0; y < rows; y++) {
+      let line = '';
+      for (let x = 0; x < columns; x++) {
+        const p = (y * columns + x) * 4;
+        const luma = 0.2126 * pixels[p] + 0.7152 * pixels[p + 1] + 0.0722 * pixels[p + 2];
+        const density = Math.max(0, Math.min(1, (247 - luma) / 218));
+        line += ramp[Math.round(Math.pow(density, 0.92) * (ramp.length - 1))];
+      }
+      result.push(line);
+    }
+    document.getElementById('result').textContent = JSON.stringify(result);
+  };
+  photo.src = '__PHOTO_DATA_URL__';
+</script>
+</html>
