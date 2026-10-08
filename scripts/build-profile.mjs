@@ -79,28 +79,12 @@ function localAverage(x, y) {
   }
   return sum / weight;
 }
-// User-requested beard emphasis, feathered in normalized source coordinates.
-// These regions follow the chin hair in the current photo; revisit on source changes.
-function beardShade(x, y) {
-  const px = (source.crop.x + (x + .5) * source.crop.width / columns) / source.width;
-  const py = (source.crop.y + (y + .5) * source.crop.height / rows) / source.height;
-  const feather = (cx, cy, rx, ry) => {
-    const distance = Math.hypot((px - cx) / rx, (py - cy) / ry);
-    const t = Math.max(0, Math.min(1, (1 - distance) / .55));
-    return t * t * (3 - 2 * t);
-  };
-  return Math.max(
-    .34 * feather(.668, .613, .065, .052),
-    .22 * feather(.635, .568, .024, .039),
-  );
-}
 const cells = tones.map((row, y) => row.map((luma, x) => {
   if (luma === null) return { char: ' ', brightness: 0 };
   // The same small-radius detail enhancement is applied to every subject cell.
-  // Background cells do not enter the average.
+  // Background cells do not enter the average and no facial masks are used.
   const enhanced = luma + .65 * (luma - localAverage(x, y));
-  const brightness = .045 + .955 * portraitTone(enhanced);
-  return { char: '@', brightness: brightness * (1 - beardShade(x, y)) };
+  return { char: '@', brightness: .045 + .955 * portraitTone(enhanced) };
 }));
 const portrait = cells.map(row => row.map(cell => cell.char).join(''));
 writeFileSync(join(assets, 'portrait.txt'), `${portrait.map(row => row.trimEnd()).join('\n')}\n`);
