@@ -61,7 +61,15 @@ const mono = 'ui-monospace, SFMono-Regular, Menlo, Consolas, &quot;Liberation Mo
 const text = (x, y, value, size = 15, fill = '#c7d5e2', attrs = '') =>
   `<text x="${x}" y="${y}" font-size="${size}" fill="${fill}" ${attrs}>${escape(value)}</text>`;
 const ink = '#8bc6df';
-const gold = '#d6b981';
+const muted = '#9bafbf';
+const profile = {
+  name: 'Gustavo de Oliveira',
+  role: 'AI Engineer / Co-Founder',
+  organization: 'Outpost Technologies',
+  focus: 'Agents · Integrations · Products',
+  stack: 'Python · TypeScript · SQL',
+  location: 'São Paulo, Brazil',
+};
 
 function ascii(x, y, width = 360) {
   // Match the photograph's crop aspect ratio, independently of font metrics.
@@ -107,49 +115,38 @@ function shell(width, height, content) {
 `;
 }
 
-const fields = [
-  ['Name', 'Gustavo de Oliveira'], ['Role', 'AI Engineer / Co-Founder'],
-  ['Focus', 'Agents · Integrations · Products'], ['Based', 'São Paulo, Brazil'],
-];
-const stack = [
-  ['Languages', 'Python · TypeScript · SQL'], ['AI', 'OpenAI APIs · MCP'],
-  ['Data', 'PostgreSQL · Supabase'], ['Cloud', 'AWS · Vercel · Cloudflare'],
-];
-const row = (y, label, value, x = 424, valueX = 552, size = 15) =>
-  `${text(x, y, `${label}:`, size, gold)}${text(valueX, y, value, size)}`;
 const desktop = [
-  ascii(26, 78),
-  text(26, 506, 'GUSTAVO DE OLIVEIRA', 12, '#92a6b7', 'letter-spacing="2"'),
-  text(424, 89, 'tav0dev@github', 19, ink, 'font-weight="600"'),
-  text(424, 112, '──────────────────────────────────────', 15, '#3b5062'),
-  ...fields.map(([label, value], index) => row(144 + index * 27, label, value)),
-  text(424, 277, '── Build', 13, ink),
-  ...stack.map(([label, value], index) => row(308 + index * 27, label, value)),
-  text(424, 428, '── Reach', 13, ink),
-  row(458, 'LinkedIn', '/in/tav0dev'), row(485, 'Email', 'gusdeoliveira.dev@gmail.com'),
-  ...['#7093af', '#8bc6df', '#d6b981', '#91b9a0', '#c7d5e2', '#7e93a8', '#a69cb5', '#d0a09b'].map((color, index) =>
-    `<rect x="${424 + index * 24}" y="505" width="24" height="9" fill="${color}"/>`),
-  text(973, 29, 'AI / DATA / PRODUCT', 11, '#92a6b7', 'text-anchor="end"'),
+  ascii(28, 66, 330),
+  text(402, 139, profile.name, 32, '#e1e9ef', 'font-weight="600"'),
+  text(402, 177, profile.role, 21, ink),
+  text(402, 207, profile.organization, 17, muted),
+  '<path d="M402 240H956" stroke="#26323d"/>',
+  text(402, 282, profile.focus, 20),
+  text(402, 319, profile.stack, 18, muted),
+  text(402, 392, profile.location, 16, muted),
 ].join('\n');
-writeFileSync(join(assets, 'profile.svg'), shell(1000, 540, desktop));
+writeFileSync(join(assets, 'profile.svg'), shell(1000, 460, desktop));
 
 const compact = [
-  ascii(20, 67, 226),
-  text(274, 98, 'Gustavo de Oliveira', 20, '#e1e9ef', 'font-weight="600"'),
-  text(274, 131, 'AI Engineer / Co-Founder', 16, ink),
-  text(274, 183, '── Focus', 13, gold),
-  text(274, 212, 'Agents · Integrations', 15),
-  text(274, 237, 'Product engineering', 15),
-  text(274, 286, 'Python · TypeScript · SQL', 14, '#92a6b7'),
-  text(274, 314, 'São Paulo, Brazil', 14, '#92a6b7'),
+  ascii(18, 70, 220),
+  text(263, 104, profile.name, 22, '#e1e9ef', 'font-weight="600"'),
+  text(263, 137, profile.role, 18, ink),
+  text(263, 164, profile.organization, 17, muted),
+  '<path d="M263 189H580" stroke="#26323d"/>',
+  text(263, 220, profile.focus, 17),
+  text(263, 251, profile.stack, 17, muted),
+  text(263, 302, profile.location, 17, muted),
 ].join('\n');
-writeFileSync(join(assets, 'profile-compact.svg'), shell(600, 360, compact));
+writeFileSync(join(assets, 'profile-compact.svg'), shell(600, 350, compact));
 
 const mobile = [
-  ascii(70, 66, 260),
-  text(200, 391, 'Gustavo de Oliveira', 23, '#e1e9ef', 'font-weight="600" text-anchor="middle"'),
-  text(200, 423, 'AI Engineer / Co-Founder', 17, ink, 'text-anchor="middle"'),
-  text(200, 452, 'Agents · Integrations · Products', 16, '#c7d5e2', 'text-anchor="middle"'),
+  ascii(75, 66, 250),
+  text(200, 382, profile.name, 26, '#e1e9ef', 'font-weight="600" text-anchor="middle"'),
+  text(200, 417, profile.role, 20, ink, 'text-anchor="middle"'),
+  text(200, 447, profile.organization, 18, muted, 'text-anchor="middle"'),
+  text(200, 491, profile.focus, 18, '#c7d5e2', 'text-anchor="middle"'),
+  text(200, 522, profile.stack, 18, muted, 'text-anchor="middle"'),
+  text(200, 553, profile.location, 18, muted, 'text-anchor="middle"'),
 ].join('\n');
-writeFileSync(join(assets, 'profile-mobile.svg'), shell(400, 480, mobile));
+writeFileSync(join(assets, 'profile-mobile.svg'), shell(400, 578, mobile));
 console.log('Built desktop, compact, and mobile profile artwork.');

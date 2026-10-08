@@ -1,6 +1,6 @@
 # Profile artwork and maintenance
 
-The profile uses a static SVG terminal panel with an ASCII portrait derived from Gustavo's supplied photograph. The English README connects AWS data engineering, the clinic CRM delivered at Neuronz, and current product engineering at Outpost. Descriptions were revised against the user's account, repository evidence, and an authenticated review of the clinic CRM interface. Bico's three paying customers were confirmed by the user; Compra Fácil is described without unmeasured counts.
+The profile uses a static SVG terminal panel with an ASCII portrait derived from Gustavo's supplied photograph. The English README contains the card, a brief introduction and three navigation links. The selected-work page connects AWS data engineering, the clinic CRM delivered at Neuronz and current product engineering at Outpost. Each project uses the same contribution, technology and result/stage fields. Descriptions were revised against the user's account, repository evidence and an authenticated review of the clinic CRM interface. Bico's three paying customers were confirmed by the user; Compra Fácil is described without unmeasured counts.
 
 ## Design references
 
@@ -14,10 +14,11 @@ The portrait uses a uniform conversion of the source photograph's luminance. A g
 
 ## Files
 
-- `README.md`: public profile copy and links.
+- `README.md`: card, brief introduction and links to selected work, LinkedIn and email.
 - `assets/profile.svg`: desktop composition for viewports above 1100 px.
-- `assets/profile-compact.svg`: horizontal composition for viewports from 601 to 1100 px.
-- `assets/profile-mobile.svg`: stacked composition for viewports up to 600 px.
+- `assets/profile-compact.svg`: horizontal composition for viewports from 521 to 1100 px.
+- `assets/profile-mobile.svg`: stacked composition for viewports up to 520 px.
+- `docs/selected-work.md`: consistent project summaries, experience, education and certification links.
 - `docs/outpost-crm-case.md`: public architecture case with contribution, upstream attribution and integration stage.
 - `docs/bico-case.md`: current Flutter product, AI scope, version history and confirmed commercial outcome.
 - `assets/portrait.txt`: generated ASCII portrait, with 110 rows and up to 160 columns.
@@ -45,13 +46,13 @@ node scripts/build-profile.mjs --photo /path/to/photo.png --browser /path/to/chr
 
 The generator uses a disposable browser profile under the system temporary directory. Chromium's sandbox is disabled for this local conversion; the generated page contains the locally embedded photograph and the checked-in conversion code.
 
-The SVGs contain selectable text, descriptions, and no scripts, external fonts, or external images. The README repeats the professional information in Markdown so the artwork is not the only way to read it.
+The SVGs contain text, descriptions, and no scripts, external fonts, or external images. The README image has descriptive alternative text; professional details and project evidence are also available as Markdown on the selected-work page. Contact links live below the image, where they are clickable and usable with a keyboard.
 
-The mobile panel uses a 400 × 480 canvas with the portrait, display name, role and focus. A 600 × 360 compact panel keeps larger text at intermediate viewport widths, where the full desktop panel would become difficult to read. Detailed fields and contact links remain in Markdown. All three portraits use the same cells, tones and aspect ratio.
+The desktop panel uses a 1000 × 460 canvas; the compact panel uses 600 × 350 and the mobile panel uses 400 × 578. All three show the same name, role, organization, focus, core languages and location, sourced from one profile object in the generator. The name and role lead the hierarchy; detailed technology lists belong with the projects. All three portraits use the same cells, tones and aspect ratio.
 
 ## Updating professional information
 
-Edit the README for projects, outcomes, dates, and contact links. Edit the field arrays in the generator for the terminal panel, then rebuild. Review business figures when the underlying reporting period changes. Keep business totals distinct from outcomes attributable to an individual contribution.
+Edit `docs/selected-work.md` for projects, outcomes, dates and background. Keep the README introduction and links brief. Edit the profile object in the generator for the terminal panel, then rebuild. Review business figures when the underlying reporting period changes. Keep business totals distinct from outcomes attributable to an individual contribution.
 
 When publishing new artwork, increment the `v` query on all three SVG URLs in the README so cached image responses do not hide the update.
 

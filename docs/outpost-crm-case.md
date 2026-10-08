@@ -1,5 +1,7 @@
 # Outpost CRM — agent integration
 
+[← Selected work](./selected-work.md#outpost-technologies)
+
 I build an omnichannel CRM that connects customer interactions to contact history and sales workflows. The agent integration extends that application with contact analysis, follow-up drafts and curated memory, controlled by the CRM's permissions and review process.
 
 ## My contribution

@@ -1,5 +1,7 @@
 # Bico — AI tools for small businesses
 
+[← Selected work](./selected-work.md#bico)
+
 Bico helps micro and small business owners connect marketing, social publishing and customer follow-up. I co-founded the product and built the application and AI workflows. The product has three paying customers and was selected for Phase 2 of Centelha SP 3.
 
 ## Product scope
