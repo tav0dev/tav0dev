@@ -16,6 +16,10 @@ const option = (name) => {
 };
 
 const photo = option('--photo');
+const tonalContrast = 1.45;
+const tonalMidpoint = 150;
+const portraitTone = luma => Math.max(0, Math.min(255,
+  (luma - tonalMidpoint) * tonalContrast + tonalMidpoint));
 if (photo) {
   // Canvas is only needed when changing the portrait. Normal builds use portrait.txt.
   const work = mkdtempSync(join(tmpdir(), 'tav0dev-portrait-'));
@@ -24,7 +28,10 @@ if (photo) {
     const type = photo.toLowerCase().endsWith('.png') ? 'image/png' : 'image/jpeg';
     const template = readFileSync(join(root, 'scripts', 'portrait.html'), 'utf8');
     const page = join(work, 'portrait.html');
-    writeFileSync(page, template.replace('__PHOTO_DATA_URL__', `data:${type};base64,${data}`));
+    writeFileSync(page, template
+      .replace('__PHOTO_DATA_URL__', `data:${type};base64,${data}`)
+      .replace('__TONAL_CONTRAST__', String(tonalContrast))
+      .replace('__TONAL_MIDPOINT__', String(tonalMidpoint)));
     const output = execFileSync(option('--browser') || 'chromium', [
       '--headless', '--no-sandbox', '--disable-gpu', '--disable-dev-shm-usage',
       '--disable-background-networking', '--no-first-run', '--no-default-browser-check',
@@ -62,13 +69,13 @@ function ascii(x, y, width = 360) {
   const lineHeight = width * (0.87 / 0.76) / 110;
   const fontSize = cellWidth / 0.6;
   const color = (luma) => {
-    // Lift shadows and midtones uniformly; glyph density still follows the photo.
-    const brightness = 0.4 + 0.6 * Math.pow(luma / 255, 0.8);
-    return '#' + [210, 229, 239].map(channel =>
+    // One global curve separates dark facial features from lighter skin.
+    const brightness = 0.25 + 0.75 * portraitTone(luma) / 255;
+    return '#' + [239, 247, 255].map(channel =>
       Math.round(channel * brightness).toString(16).padStart(2, '0')).join('');
   };
   // Each cell keeps its source luminance. No eye, beard, or facial shadow edits.
-  return `<g font-family="Liberation Mono, monospace" font-size="${fontSize}" font-weight="400">${portrait.map((row, index) => {
+  return `<g font-family="Liberation Mono, monospace" font-size="${fontSize}" font-weight="700">${portrait.map((row, index) => {
     const positions = [];
     const runs = [];
     for (let column = 0; column < row.length; column++) {

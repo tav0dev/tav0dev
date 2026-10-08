@@ -10,7 +10,7 @@ The supplied screenshot shows [Andrew Grant's profile repository](https://github
 
 This composition has fixed columns and short fields, so it uses a small SVG generator without runtime dependencies. Canvas samples the photograph only when regenerating the portrait. The committed SVGs, ASCII text, and sampled tones are sufficient to rebuild the artwork without the original photo or a browser.
 
-The portrait uses a uniform conversion of the source photograph's luminance. Character density follows the sampled tones; a global tonal curve lifts shadow and midtone ink for readability. No regional contrast adjustment is applied to the eye, beard, or other facial features. Its displayed aspect ratio matches the source crop. Background removal starts from near-white edge pixels; a protection polygon tuned to the supplied photograph keeps the bright forehead from being removed where it touches the white background. Dark retained subject cells use at least a dot, and spaces are reserved for the background. Every visible character has an explicit horizontal position. SVG text position lists preserve spacing across color runs and reduce markup without changing the character grid. The display name uses Gustavo de Oliveira, his preferred professional name.
+The portrait uses a uniform conversion of the source photograph's luminance. A global contrast curve controls character density and ink brightness, separating darker eyes and beard from lighter skin. Bold character strokes improve readability at small display sizes. No regional contrast adjustment is applied to facial features. Its displayed aspect ratio matches the source crop. Background removal starts from near-white edge pixels; protection polygons tuned to the supplied photograph keep bright forehead and nose highlights from being removed where they touch the white background. Dark retained subject cells use at least a dot, and spaces are reserved for the background. Every visible character has an explicit horizontal position. SVG text position lists preserve spacing across color runs and reduce markup without changing the character grid. The display name uses Gustavo de Oliveira, his preferred professional name.
 
 ## Files
 
@@ -36,7 +36,7 @@ Requires Node.js 18 or newer. No package installation is needed.
 node scripts/build-profile.mjs
 ```
 
-To change the portrait, also install Chromium or provide the executable path for a compatible browser. The current crop and forehead protection are tuned for the supplied square portrait; adjust them in `scripts/portrait.html` if using a different photo.
+To change the portrait, also install Chromium or provide the executable path for a compatible browser. The current crop and highlight protection are tuned for the supplied square portrait; adjust them in `scripts/portrait.html` if using a different photo. If changing `tonalContrast` or `tonalMidpoint` in the generator, regenerate from the photo so character density and ink use the same curve.
 
 ```sh
 node scripts/build-profile.mjs --photo references/1768696782714.png
@@ -52,6 +52,8 @@ The mobile panel uses a 400 × 480 canvas with the portrait, display name, role 
 ## Updating professional information
 
 Edit the README for projects, outcomes, dates, and contact links. Edit the field arrays in the generator for the terminal panel, then rebuild. Review business figures when the underlying reporting period changes. Keep business totals distinct from outcomes attributable to an individual contribution.
+
+When publishing new artwork, increment the `v` query on all three SVG URLs in the README so cached image responses do not hide the update.
 
 Keep implemented integrations distinct from verified operation. The Outpost QM/GBrain case records the scope of the custom integration and the remaining live validation. A private production system can be described as professional experience without publishing its source or customer information.
 

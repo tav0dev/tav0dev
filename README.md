@@ -1,7 +1,7 @@
 <picture>
-  <source media="(max-width: 600px)" srcset="./assets/profile-mobile.svg">
-  <source media="(max-width: 1100px)" srcset="./assets/profile-compact.svg">
-  <img src="./assets/profile.svg" width="100%" alt="ASCII portrait of Gustavo de Oliveira. AI Engineer and co-founder at Outpost Technologies, based in São Paulo, Brazil.">
+  <source media="(max-width: 600px)" srcset="./assets/profile-mobile.svg?v=2">
+  <source media="(max-width: 1100px)" srcset="./assets/profile-compact.svg?v=2">
+  <img src="./assets/profile.svg?v=2" width="100%" alt="ASCII portrait of Gustavo de Oliveira. AI Engineer and co-founder at Outpost Technologies, based in São Paulo, Brazil.">
 </picture>
 
 # Gustavo de Oliveira
