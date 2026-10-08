@@ -54,7 +54,7 @@ The desktop panel uses a 1000 × 460 canvas; the compact panel uses 600 × 350 a
 
 Edit `docs/selected-work.md` for projects, outcomes, dates and background. Keep the README introduction and links brief. Edit the profile object in the generator for the terminal panel, then rebuild. Review business figures when the underlying reporting period changes. Keep business totals distinct from outcomes attributable to an individual contribution.
 
-When publishing new artwork, increment the `v` query on all three SVG URLs in the README so cached image responses do not hide the update.
+The README pins all three image URLs to the commit containing the reviewed artwork. A query on a `main`-branch URL did not reliably avoid stale image responses during verification. After changing the artwork, commit the generated SVGs, update all three README URLs to that commit's full SHA, then publish the README. Ordinary copy changes do not require an artwork update.
 
 Keep implemented integrations distinct from verified operation. The Outpost QM/GBrain case records the scope of the custom integration and the remaining live validation. A private production system can be described as professional experience without publishing its source or customer information.
 

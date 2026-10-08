@@ -1,8 +1,8 @@
 <p>
 <picture>
-  <source media="(max-width: 520px)" srcset="./assets/profile-mobile.svg?v=3">
-  <source media="(max-width: 1100px)" srcset="./assets/profile-compact.svg?v=3">
-  <img src="./assets/profile.svg?v=3" width="100%" alt="Gustavo de Oliveira — AI Engineer and co-founder at Outpost Technologies. Agents, integrations and products. Python, TypeScript and SQL. São Paulo, Brazil. ASCII portrait based on his photograph.">
+  <source media="(max-width: 520px)" srcset="https://raw.githubusercontent.com/tav0dev/tav0dev/e73a0ba699b5c56ca9b5da2f325581f774fa019d/assets/profile-mobile.svg">
+  <source media="(max-width: 1100px)" srcset="https://raw.githubusercontent.com/tav0dev/tav0dev/e73a0ba699b5c56ca9b5da2f325581f774fa019d/assets/profile-compact.svg">
+  <img src="https://raw.githubusercontent.com/tav0dev/tav0dev/e73a0ba699b5c56ca9b5da2f325581f774fa019d/assets/profile.svg" width="100%" alt="Gustavo de Oliveira — AI Engineer and co-founder at Outpost Technologies. Agents, integrations and products. Python, TypeScript and SQL. São Paulo, Brazil. ASCII portrait based on his photograph.">
 </picture>
 </p>
 
