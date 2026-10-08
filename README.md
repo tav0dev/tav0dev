@@ -1,8 +1,8 @@
 <p>
 <picture>
-  <source media="(max-width: 520px)" srcset="https://raw.githubusercontent.com/tav0dev/tav0dev/d80be58970734ac351c3ba6a5a7d4fcfe1d836d7/assets/profile-mobile.svg">
-  <source media="(max-width: 1100px)" srcset="https://raw.githubusercontent.com/tav0dev/tav0dev/d80be58970734ac351c3ba6a5a7d4fcfe1d836d7/assets/profile-compact.svg">
-  <img src="https://raw.githubusercontent.com/tav0dev/tav0dev/d80be58970734ac351c3ba6a5a7d4fcfe1d836d7/assets/profile.svg" width="100%" alt="Gustavo de Oliveira — AI Engineer and co-founder at Outpost Technologies. Agents, integrations and products. Python, TypeScript and SQL. São Paulo, Brazil. ASCII portrait based on his photograph.">
+  <source media="(max-width: 520px)" srcset="https://raw.githubusercontent.com/tav0dev/tav0dev/dcb7d3c7904097f24d2a7c311cacf52c2c501354/assets/profile-mobile.svg">
+  <source media="(max-width: 1100px)" srcset="https://raw.githubusercontent.com/tav0dev/tav0dev/dcb7d3c7904097f24d2a7c311cacf52c2c501354/assets/profile-compact.svg">
+  <img src="https://raw.githubusercontent.com/tav0dev/tav0dev/dcb7d3c7904097f24d2a7c311cacf52c2c501354/assets/profile.svg" width="100%" alt="Gustavo de Oliveira — AI Engineer and co-founder at Outpost Technologies. Agents, integrations and products. Python, TypeScript and SQL. São Paulo, Brazil. ASCII portrait based on his photograph.">
 </picture>
 </p>
 
