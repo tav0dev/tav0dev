@@ -45,12 +45,10 @@ if (photo) {
 }
 
 function validatePortrait(data) {
-  const { version, columns, rows, source, font, glyphs, tones } = data;
-  if (version !== 3 || !Number.isInteger(columns) || columns < 1 ||
+  const { version, columns, rows, source, font, tones } = data;
+  if (version !== 4 || !Number.isInteger(columns) || columns < 1 ||
       !Number.isInteger(rows) || rows < 1 || !source?.crop?.width || !source.crop.height ||
-      !font?.cellAspect || !Array.isArray(glyphs) || !glyphs.length ||
-      glyphs.some(g => typeof g.char !== 'string' || g.char.length !== 1 ||
-        !(g.coverage > 0) || !outlines.paths[g.char]) ||
+      !font?.cellAspect || !outlines.paths['@'] ||
       !Array.isArray(tones) || tones.length !== rows || tones.some(row =>
         !Array.isArray(row) || row.length !== columns || row.some(value =>
           value !== null && (!Number.isInteger(value) || value < 0 || value > 255)))) {
@@ -61,17 +59,32 @@ function validatePortrait(data) {
 const samples = JSON.parse(readFileSync(join(assets, 'portrait-tones.json'), 'utf8'));
 validatePortrait(samples);
 const { columns, rows, source, font, tones } = samples;
-const glyphs = [...samples.glyphs].sort((a, b) => a.coverage - b.coverage);
-// A single monotonic curve for the entire portrait; no local feature adjustments.
-const sigmoid = value => 1 / (1 + Math.exp(-6 * (value - .5)));
-const black = sigmoid(0);
-const toneRange = sigmoid(1) - black;
-const portraitTone = luma => (sigmoid(Math.min(1, luma / 235)) - black) / toneRange;
-const cells = tones.map(row => row.map(luma => {
+// Keep the character shape constant so luminance changes do not introduce
+// distracting rows of L, C or 0 across the face. The portrait is entirely ASCII;
+// grayscale ink carries its tones, without any photograph beneath the glyphs.
+const portraitTone = luma => Math.pow(Math.min(1, Math.max(0, luma) / 225), .8);
+const kernel = [1, 4, 6, 4, 1];
+function localAverage(x, y) {
+  let sum = 0;
+  let weight = 0;
+  for (let dy = -2; dy <= 2; dy++) {
+    for (let dx = -2; dx <= 2; dx++) {
+      const luma = tones[Math.max(0, Math.min(rows - 1, y + dy))]
+        [Math.max(0, Math.min(columns - 1, x + dx))];
+      if (luma === null) continue;
+      const cellWeight = kernel[dx + 2] * kernel[dy + 2];
+      sum += luma * cellWeight;
+      weight += cellWeight;
+    }
+  }
+  return sum / weight;
+}
+const cells = tones.map((row, y) => row.map((luma, x) => {
   if (luma === null) return { char: ' ', brightness: 0 };
-  const density = (.035 + .965 * portraitTone(luma)) * glyphs.at(-1).coverage;
-  const glyph = glyphs.find(g => g.coverage >= density) || glyphs.at(-1);
-  return { char: glyph.char, brightness: density / glyph.coverage };
+  // The same small-radius detail enhancement is applied to every subject cell.
+  // Background cells do not enter the average and no facial masks are used.
+  const enhanced = luma + .65 * (luma - localAverage(x, y));
+  return { char: '@', brightness: .045 + .955 * portraitTone(enhanced) };
 }));
 const portrait = cells.map(row => row.map(cell => cell.char).join(''));
 writeFileSync(join(assets, 'portrait.txt'), `${portrait.map(row => row.trimEnd()).join('\n')}\n`);
@@ -96,18 +109,15 @@ function ascii(x, y, width = 360) {
   const lineHeight = width * source.crop.height / source.crop.width / rows;
   const fontSize = cellWidth / font.cellAspect;
   const scale = fontSize / outlines.unitsPerEm;
-  const id = char => `ascii-${char.charCodeAt(0)}`;
-  const definitions = glyphs.map(g =>
-    `<path id="${id(g.char)}" d="${outlines.paths[g.char]}"/>`).join('');
   // Fixed glyph outlines avoid tiny-font hinting and fallback-font differences.
   // Neutral gray fills also keep the portrait independent of the card's blue ink.
   return `<g id="portrait" aria-hidden="true" transform="translate(${x} ${y})">
-<defs>${definitions}</defs>
+<defs><path id="ascii-64" d="${outlines.paths['@']}"/></defs>
 <g fill="currentColor" stroke="currentColor" stroke-width="${outlines.strokeWidth}" stroke-linejoin="round">${cells.map((row, index) => {
     const content = row.map((cell, column) => {
       if (cell.char === ' ') return '';
       const gray = Math.round(247 * cell.brightness).toString(16).padStart(2, '0');
-      return `<use href="#${id(cell.char)}" color="#${gray.repeat(3)}" transform="translate(${(column * cellWidth).toFixed(3)} 0) scale(${scale.toFixed(8)} ${(-scale).toFixed(8)})"/>`;
+      return `<use href="#ascii-64" color="#${gray.repeat(3)}" transform="translate(${(column * cellWidth).toFixed(3)} 0) scale(${scale.toFixed(8)} ${(-scale).toFixed(8)})"/>`;
     }).join('');
     return content ? `<g transform="translate(0 ${((index + .8) * lineHeight).toFixed(3)})">${content}</g>` : '';
   }).join('\n')}</g></g>`;

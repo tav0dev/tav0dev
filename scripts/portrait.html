@@ -110,32 +110,8 @@
           .2126 * sampled[offset] + .7152 * sampled[offset + 1] + .0722 * sampled[offset + 2]);
       }));
 
-    // Measure the same vector shapes used in the SVG, including their stroke.
-    // No installed font, font substitution or subpixel text rendering is involved.
-    const calibration = document.createElement('canvas');
-    calibration.width = 60;
-    calibration.height = 100;
-    const ink = calibration.getContext('2d', { willReadFrequently: true });
-    const glyphs = Object.entries(outlines.paths).map(([char, commands]) => {
-      ink.resetTransform();
-      ink.clearRect(0, 0, 60, 100);
-      ink.translate(0, 80);
-      ink.scale(100 / outlines.unitsPerEm, -100 / outlines.unitsPerEm);
-      ink.fillStyle = '#fff';
-      ink.strokeStyle = '#fff';
-      ink.lineWidth = outlines.strokeWidth;
-      ink.lineJoin = 'round';
-      const path = new Path2D(commands);
-      ink.fill(path);
-      ink.stroke(path);
-      const data = ink.getImageData(0, 0, 60, 100).data;
-      let coverage = 0;
-      for (let offset = 3; offset < data.length; offset += 4) coverage += data[offset] / 255;
-      return { char, coverage: Number((coverage / 6000).toFixed(8)) };
-    }).sort((a, b) => a.coverage - b.coverage);
-
     document.getElementById('result').textContent = JSON.stringify({
-      version: 3, columns, rows, source: { width, height, crop }, font, glyphs, tones,
+      version: 4, columns, rows, source: { width, height, crop }, font, tones,
     });
   };
   photo.src = '__PHOTO_DATA_URL__';

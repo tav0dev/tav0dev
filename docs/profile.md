@@ -8,13 +8,13 @@ The supplied screenshot shows [Andrew Grant's profile repository](https://github
 
 [Pretext](https://github.com/chenglou/pretext) is a JavaScript/TypeScript text measurement and layout library that can support DOM, Canvas, and SVG output. It could help with a more complex interactive composition. GitHub [sanitizes README HTML and removes scripts](https://github.com/github/markup), so an interactive React or Pretext demo would need its own page; it cannot execute inside the profile README.
 
-This composition has fixed columns and short fields, so it uses a small SVG generator without runtime dependencies. Canvas samples the photograph only when changing the source. The committed tone samples, crop geometry, glyph outlines and calibration are sufficient to rebuild the ASCII text and SVGs without the original photo or a browser.
+This composition has fixed columns and short fields, so it uses a small SVG generator without runtime dependencies. Canvas samples the photograph only when changing the source. The committed tone samples, crop geometry and glyph outline are sufficient to rebuild the ASCII grid and SVGs without the original photo or a browser.
 
 The portrait was rebuilt from the corrected source, `references/profile_image (1).png`. The previous photograph's crop, highlight polygons and contrast settings are not used. Background removal finds the largest nonwhite connected subject and fills enclosed highlights, then derives a crop with a small margin. The grid and displayed aspect ratio follow that crop. There are no masks or contrast adjustments specific to eyes, nose, forehead or beard.
 
-The converter measures the ink coverage of each monospace glyph outline, including a small additional stroke. A single monotonic S-curve increases tonal separation across the portrait; glyph coverage and ink brightness together reproduce the requested density. Dark subject cells retain a visible dot, while spaces represent only the background. The 128-column grid uses larger characters than the earlier 160-column version, reducing the fine lines that obscured the face at profile size.
+Each foreground cell uses the same ASCII `@` shape, with its gray ink set from the sampled luminance. A constant texture keeps changes between letter shapes from producing bands across the skin. A small-radius detail enhancement is applied uniformly across the subject before a monotonic brightness curve; background pixels are excluded from the neighborhood average. Spaces represent only the background. The 128 × 88 grid and the original 748 × 861 crop are preserved.
 
-Portrait characters are internal SVG paths reused at fixed positions, with neutral gray fills. This keeps their shapes independent of installed fonts, fallback fonts and small-text hinting. Profile labels remain ordinary SVG text. The outlines come from Liberation Mono Bold; their copyright and SIL Open Font License are included in `assets/portrait-glyphs.LICENSE.txt`. The display name uses Gustavo de Oliveira, his preferred professional name.
+Portrait characters are internal SVG paths reused at fixed positions, with neutral gray fills. There is no raster photo, image overlay or blur filter in the SVG. Fixed paths keep the character shape independent of installed fonts, fallback fonts and small-text hinting. Profile labels remain ordinary SVG text. The outline comes from Liberation Mono Bold; its copyright and SIL Open Font License are included in `assets/portrait-glyphs.LICENSE.txt`. The display name uses Gustavo de Oliveira, his preferred professional name.
 
 ## Files
 
@@ -25,9 +25,9 @@ Portrait characters are internal SVG paths reused at fixed positions, with neutr
 - `docs/selected-work.md`: consistent project summaries, experience, education and certification links.
 - `docs/outpost-crm-case.md`: public architecture case with contribution, upstream attribution and integration stage.
 - `docs/bico-case.md`: current Flutter product, AI scope, version history and confirmed commercial outcome.
-- `assets/portrait.txt`: generated ASCII portrait, with 88 rows and up to 128 columns for the current source.
-- `assets/portrait-tones.json`: source luminance for each cell (`null` for background), source/crop dimensions, grid size, font settings and measured glyph coverage. The renderer derives both characters and ink from these samples.
-- `assets/portrait-glyphs.json`: fixed glyph outlines, spacing and stroke width used by both calibration and SVG rendering.
+- `assets/portrait.txt`: the generated character grid, with 88 rows and up to 128 columns. It records the silhouette; the grayscale shading is applied by the SVG renderer.
+- `assets/portrait-tones.json`: source luminance for each cell (`null` for background), source/crop dimensions, grid size and cell aspect ratio. The renderer derives ink intensity from these samples.
+- `assets/portrait-glyphs.json`: the fixed `@` outline, spacing and stroke width used in SVG rendering.
 - `assets/portrait-glyphs.LICENSE.txt`: copyright notice and license for those outlines.
 - `scripts/build-profile.mjs`: editable profile fields, colors, and layout.
 - `scripts/portrait.html`: local Canvas conversion used by the generator.
@@ -44,14 +44,14 @@ Requires Node.js 18 or newer. No package installation is needed.
 node scripts/build-profile.mjs
 ```
 
-To change the portrait, also install Chromium or provide the executable path for a compatible browser. No font installation is needed: calibration uses the same saved paths as the SVG. Background removal expects a portrait on a white background; review the silhouette when using a different photo. The crop and row count are computed from the new subject. Changes to `portraitTone` in the generator can be rebuilt from saved samples without opening the original photo.
+To change the portrait, also install Chromium or provide the executable path for a compatible browser. No font installation is needed: the renderer uses the saved glyph path. Background removal expects a portrait on a white background; review the silhouette when using a different photo. The crop and row count are computed from the new subject. Tone and detail settings in the generator can be rebuilt from saved samples without opening the original photo.
 
 ```sh
 node scripts/build-profile.mjs --photo "references/profile_image (1).png"
 node scripts/build-profile.mjs --photo /path/to/photo.png --browser /path/to/chromium
 ```
 
-To re-export the glyph outlines, install Python's `fontTools` package and run the optional command below with Liberation Mono Bold. Keep its license with the exported paths. Then rerun the photo conversion to recalibrate ink coverage, including any change to `strokeWidth`.
+To re-export the glyph outline, install Python's `fontTools` package and run the optional command below with Liberation Mono Bold. Keep its license with the exported path, then rebuild the SVGs. Changes to the outline or `strokeWidth` do not require resampling the photograph.
 
 ```sh
 python scripts/trace-portrait-font.py /path/to/LiberationMono-Bold.ttf assets/portrait-glyphs.json

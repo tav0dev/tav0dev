@@ -16,7 +16,7 @@ font = TTFont(args.font)
 glyphs = font.getGlyphSet()
 cmap = font.getBestCmap()
 paths = {}
-for char in ".,:;i1tfLCG08@":
+for char in "@":
     pen = SVGPathPen(glyphs)
     glyphs[cmap[ord(char)]].draw(pen)
     paths[char] = pen.getCommands()
@@ -27,7 +27,7 @@ result = {
     "license": "SIL Open Font License 1.1; see portrait-glyphs.LICENSE.txt",
     "unitsPerEm": units,
     "advance": font["hmtx"].metrics[cmap[ord("@")]][0],
-    "strokeWidth": units * 0.025,
+    "strokeWidth": units * 0.04,
     "paths": paths,
 }
 args.output.write_text(json.dumps(result, indent=2) + "\n")
