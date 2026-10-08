@@ -92,8 +92,9 @@
     const crop = { x: left, y: top, width: right - left + 1, height: bottom - top + 1 };
     context.putImageData(image, 0, 0);
 
-    const font = { family: 'Liberation Mono, monospace', weight: 700, cellAspect: .6 };
-    const columns = 160;
+    const outlines = __GLYPH_OUTLINES__;
+    const font = { cellAspect: outlines.advance / outlines.unitsPerEm };
+    const columns = 128;
     const rows = Math.round(columns * crop.height / crop.width * font.cellAspect);
     const sample = document.createElement('canvas');
     sample.width = columns;
@@ -109,17 +110,24 @@
           .2126 * sampled[offset] + .7152 * sampled[offset + 1] + .0722 * sampled[offset + 2]);
       }));
 
-    // Measure actual glyph coverage: alphabetic order is not brightness order.
-    // The renderer combines this coverage with ink intensity to keep smooth tones.
+    // Measure the same vector shapes used in the SVG, including their stroke.
+    // No installed font, font substitution or subpixel text rendering is involved.
     const calibration = document.createElement('canvas');
     calibration.width = 60;
     calibration.height = 100;
     const ink = calibration.getContext('2d', { willReadFrequently: true });
-    ink.font = `${font.weight} 100px ${font.family}`;
-    ink.fillStyle = '#fff';
-    const glyphs = [...'.,:;i1tfLCG08@'].map(char => {
+    const glyphs = Object.entries(outlines.paths).map(([char, commands]) => {
+      ink.resetTransform();
       ink.clearRect(0, 0, 60, 100);
-      ink.fillText(char, 0, 80);
+      ink.translate(0, 80);
+      ink.scale(100 / outlines.unitsPerEm, -100 / outlines.unitsPerEm);
+      ink.fillStyle = '#fff';
+      ink.strokeStyle = '#fff';
+      ink.lineWidth = outlines.strokeWidth;
+      ink.lineJoin = 'round';
+      const path = new Path2D(commands);
+      ink.fill(path);
+      ink.stroke(path);
       const data = ink.getImageData(0, 0, 60, 100).data;
       let coverage = 0;
       for (let offset = 3; offset < data.length; offset += 4) coverage += data[offset] / 255;
@@ -127,7 +135,7 @@
     }).sort((a, b) => a.coverage - b.coverage);
 
     document.getElementById('result').textContent = JSON.stringify({
-      version: 2, columns, rows, source: { width, height, crop }, font, glyphs, tones,
+      version: 3, columns, rows, source: { width, height, crop }, font, glyphs, tones,
     });
   };
   photo.src = '__PHOTO_DATA_URL__';

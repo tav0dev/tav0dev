@@ -16,6 +16,7 @@ const option = (name) => {
 };
 
 const photo = option('--photo');
+const outlines = JSON.parse(readFileSync(join(assets, 'portrait-glyphs.json'), 'utf8'));
 if (photo) {
   // Canvas is only needed when changing the source. Normal builds use saved samples.
   const work = mkdtempSync(join(tmpdir(), 'tav0dev-portrait-'));
@@ -24,7 +25,9 @@ if (photo) {
     const type = photo.toLowerCase().endsWith('.png') ? 'image/png' : 'image/jpeg';
     const template = readFileSync(join(root, 'scripts', 'portrait.html'), 'utf8');
     const page = join(work, 'portrait.html');
-    writeFileSync(page, template.replace('__PHOTO_DATA_URL__', `data:${type};base64,${data}`));
+    writeFileSync(page, template
+      .replace('__PHOTO_DATA_URL__', `data:${type};base64,${data}`)
+      .replace('__GLYPH_OUTLINES__', JSON.stringify(outlines)));
     const output = execFileSync(option('--browser') || 'chromium', [
       '--headless', '--no-sandbox', '--disable-gpu', '--disable-dev-shm-usage',
       '--disable-background-networking', '--no-first-run', '--no-default-browser-check',
@@ -43,10 +46,11 @@ if (photo) {
 
 function validatePortrait(data) {
   const { version, columns, rows, source, font, glyphs, tones } = data;
-  if (version !== 2 || !Number.isInteger(columns) || columns < 1 ||
+  if (version !== 3 || !Number.isInteger(columns) || columns < 1 ||
       !Number.isInteger(rows) || rows < 1 || !source?.crop?.width || !source.crop.height ||
       !font?.cellAspect || !Array.isArray(glyphs) || !glyphs.length ||
-      glyphs.some(g => typeof g.char !== 'string' || g.char.length !== 1 || !(g.coverage > 0)) ||
+      glyphs.some(g => typeof g.char !== 'string' || g.char.length !== 1 ||
+        !(g.coverage > 0) || !outlines.paths[g.char]) ||
       !Array.isArray(tones) || tones.length !== rows || tones.some(row =>
         !Array.isArray(row) || row.length !== columns || row.some(value =>
           value !== null && (!Number.isInteger(value) || value < 0 || value > 255)))) {
@@ -59,7 +63,10 @@ validatePortrait(samples);
 const { columns, rows, source, font, tones } = samples;
 const glyphs = [...samples.glyphs].sort((a, b) => a.coverage - b.coverage);
 // A single monotonic curve for the entire portrait; no local feature adjustments.
-const portraitTone = luma => Math.pow(Math.min(1, luma / 235), .85);
+const sigmoid = value => 1 / (1 + Math.exp(-6 * (value - .5)));
+const black = sigmoid(0);
+const toneRange = sigmoid(1) - black;
+const portraitTone = luma => (sigmoid(Math.min(1, luma / 235)) - black) / toneRange;
 const cells = tones.map(row => row.map(luma => {
   if (luma === null) return { char: ' ', brightness: 0 };
   const density = (.035 + .965 * portraitTone(luma)) * glyphs.at(-1).coverage;
@@ -88,22 +95,22 @@ function ascii(x, y, width = 360) {
   const cellWidth = width / columns;
   const lineHeight = width * source.crop.height / source.crop.width / rows;
   const fontSize = cellWidth / font.cellAspect;
-  const color = brightness => '#' + [233, 243, 251].map(channel =>
-    Math.round(channel * brightness).toString(16).padStart(2, '0')).join('');
-  return `<g font-family="${escape(font.family)}" font-size="${fontSize}" font-weight="${font.weight}">${portrait.map((row, index) => {
-    const positions = [];
-    const runs = [];
-    for (let column = 0; column < row.length; column++) {
-      if (row[column] === ' ') continue;
-      positions.push((x + column * cellWidth).toFixed(3));
-      const fill = color(cells[index][column].brightness);
-      const last = runs.at(-1);
-      if (last?.fill === fill) last.value += row[column];
-      else runs.push({ fill, value: row[column] });
-    }
-    const spans = runs.map(run => `<tspan fill="${run.fill}">${escape(run.value)}</tspan>`).join('');
-    return spans ? `<text x="${positions.join(' ')}" y="${(y + (index + .8) * lineHeight).toFixed(3)}">${spans}</text>` : '';
-  }).join('\n')}</g>`;
+  const scale = fontSize / outlines.unitsPerEm;
+  const id = char => `ascii-${char.charCodeAt(0)}`;
+  const definitions = glyphs.map(g =>
+    `<path id="${id(g.char)}" d="${outlines.paths[g.char]}"/>`).join('');
+  // Fixed glyph outlines avoid tiny-font hinting and fallback-font differences.
+  // Neutral gray fills also keep the portrait independent of the card's blue ink.
+  return `<g id="portrait" aria-hidden="true" transform="translate(${x} ${y})">
+<defs>${definitions}</defs>
+<g fill="currentColor" stroke="currentColor" stroke-width="${outlines.strokeWidth}" stroke-linejoin="round">${cells.map((row, index) => {
+    const content = row.map((cell, column) => {
+      if (cell.char === ' ') return '';
+      const gray = Math.round(247 * cell.brightness).toString(16).padStart(2, '0');
+      return `<use href="#${id(cell.char)}" color="#${gray.repeat(3)}" transform="translate(${(column * cellWidth).toFixed(3)} 0) scale(${scale.toFixed(8)} ${(-scale).toFixed(8)})"/>`;
+    }).join('');
+    return content ? `<g transform="translate(0 ${((index + .8) * lineHeight).toFixed(3)})">${content}</g>` : '';
+  }).join('\n')}</g></g>`;
 }
 
 function shell(width, height, content) {
