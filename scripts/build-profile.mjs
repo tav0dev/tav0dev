@@ -62,18 +62,25 @@ function ascii(x, y, width = 360) {
   const lineHeight = width * (0.87 / 0.76) / 110;
   const fontSize = cellWidth / 0.6;
   const color = (luma) => {
-    const brightness = 0.15 + 0.85 * luma / 255;
+    // Lift shadows and midtones uniformly; glyph density still follows the photo.
+    const brightness = 0.4 + 0.6 * Math.pow(luma / 255, 0.8);
     return '#' + [210, 229, 239].map(channel =>
       Math.round(channel * brightness).toString(16).padStart(2, '0')).join('');
   };
   // Each cell keeps its source luminance. No eye, beard, or facial shadow edits.
   return `<g font-family="Liberation Mono, monospace" font-size="${fontSize}" font-weight="400">${portrait.map((row, index) => {
-    let spans = '';
+    const positions = [];
+    const runs = [];
     for (let column = 0; column < row.length; column++) {
       if (row[column] === ' ') continue;
-      spans += `<tspan x="${(x + column * cellWidth).toFixed(3)}" fill="${color(tones[index][column])}">${escape(row[column])}</tspan>`;
+      positions.push((x + column * cellWidth).toFixed(3));
+      const fill = color(tones[index][column]);
+      const last = runs.at(-1);
+      if (last?.fill === fill) last.value += row[column];
+      else runs.push({ fill, value: row[column] });
     }
-    return spans ? `<text y="${(y + index * lineHeight).toFixed(3)}">${spans}</text>` : '';
+    const spans = runs.map(run => `<tspan fill="${run.fill}">${escape(run.value)}</tspan>`).join('');
+    return spans ? `<text x="${positions.join(' ')}" y="${(y + index * lineHeight).toFixed(3)}">${spans}</text>` : '';
   }).join('\n')}</g>`;
 }
 
@@ -82,11 +89,6 @@ function shell(width, height, content) {
 <svg xmlns="http://www.w3.org/2000/svg" width="${width}" height="${height}" viewBox="0 0 ${width} ${height}" role="img" aria-labelledby="title description">
   <title id="title">Gustavo de Oliveira — AI Engineer</title>
   <desc id="description">ASCII portrait of Gustavo de Oliveira, based on his photograph. AI Engineer and co-founder at Outpost Technologies in São Paulo, Brazil. Builds agents, integrations, and products using Python, TypeScript, SQL, and AWS.</desc>
-  <defs>
-    <linearGradient id="portrait-ink" x1="0" y1="70" x2="0" y2="480" gradientUnits="userSpaceOnUse">
-      <stop offset="0" stop-color="#d2e5ef"/><stop offset="0.65" stop-color="#9cbad0"/><stop offset="1" stop-color="#7093af"/>
-    </linearGradient>
-  </defs>
   <rect x="0.5" y="0.5" width="${width - 1}" height="${height - 1}" rx="12" fill="#0d1117" stroke="#303943"/>
   <path d="M1 47H${width - 1}" stroke="#26323d"/>
   <circle cx="23" cy="24" r="4" fill="#617a8a"/><circle cx="39" cy="24" r="4" fill="#8c9fa7"/><circle cx="55" cy="24" r="4" fill="#b6c5c8"/>
@@ -124,6 +126,18 @@ const desktop = [
 ].join('\n');
 writeFileSync(join(assets, 'profile.svg'), shell(1000, 540, desktop));
 
+const compact = [
+  ascii(20, 67, 226),
+  text(274, 98, 'Gustavo de Oliveira', 20, '#e1e9ef', 'font-weight="600"'),
+  text(274, 131, 'AI Engineer / Co-Founder', 16, ink),
+  text(274, 183, '── Focus', 13, gold),
+  text(274, 212, 'Agents · Integrations', 15),
+  text(274, 237, 'Product engineering', 15),
+  text(274, 286, 'Python · TypeScript · SQL', 14, '#92a6b7'),
+  text(274, 314, 'São Paulo, Brazil', 14, '#92a6b7'),
+].join('\n');
+writeFileSync(join(assets, 'profile-compact.svg'), shell(600, 360, compact));
+
 const mobile = [
   ascii(70, 66, 260),
   text(200, 391, 'Gustavo de Oliveira', 23, '#e1e9ef', 'font-weight="600" text-anchor="middle"'),
@@ -131,4 +145,4 @@ const mobile = [
   text(200, 452, 'Agents · Integrations · Products', 16, '#c7d5e2', 'text-anchor="middle"'),
 ].join('\n');
 writeFileSync(join(assets, 'profile-mobile.svg'), shell(400, 480, mobile));
-console.log('Built assets/profile.svg and assets/profile-mobile.svg');
+console.log('Built desktop, compact, and mobile profile artwork.');

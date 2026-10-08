@@ -10,14 +10,16 @@ The supplied screenshot shows [Andrew Grant's profile repository](https://github
 
 This composition has fixed columns and short fields, so it uses a small SVG generator without runtime dependencies. Canvas samples the photograph only when regenerating the portrait. The committed SVGs, ASCII text, and sampled tones are sufficient to rebuild the artwork without the original photo or a browser.
 
-The portrait uses a uniform conversion of the source photograph's luminance. Both character density and ink brightness follow the sampled tones; no regional contrast adjustment is applied to the eye, beard, or other facial features. Its displayed aspect ratio matches the source crop. Background removal starts from near-white edge pixels; a protection polygon tuned to the supplied photograph keeps the bright forehead from being removed where it touches the white background. Dark retained subject cells use at least a dot, and spaces are reserved for the background. Every visible character has an explicit horizontal position, so SVG whitespace normalization cannot collapse the portrait's proportions. The display name uses Gustavo de Oliveira, his preferred professional name.
+The portrait uses a uniform conversion of the source photograph's luminance. Character density follows the sampled tones; a global tonal curve lifts shadow and midtone ink for readability. No regional contrast adjustment is applied to the eye, beard, or other facial features. Its displayed aspect ratio matches the source crop. Background removal starts from near-white edge pixels; a protection polygon tuned to the supplied photograph keeps the bright forehead from being removed where it touches the white background. Dark retained subject cells use at least a dot, and spaces are reserved for the background. Every visible character has an explicit horizontal position. SVG text position lists preserve spacing across color runs and reduce markup without changing the character grid. The display name uses Gustavo de Oliveira, his preferred professional name.
 
 ## Files
 
 - `README.md`: public profile copy and links.
-- `assets/profile.svg`: desktop composition.
+- `assets/profile.svg`: desktop composition for viewports above 1100 px.
+- `assets/profile-compact.svg`: horizontal composition for viewports from 601 to 1100 px.
 - `assets/profile-mobile.svg`: stacked composition for viewports up to 600 px.
 - `docs/outpost-crm-case.md`: public architecture case with contribution, upstream attribution and integration stage.
+- `docs/bico-case.md`: current Flutter product, AI scope, version history and confirmed commercial outcome.
 - `assets/portrait.txt`: generated ASCII portrait, with 110 rows and up to 160 columns.
 - `assets/portrait-tones.json`: sampled source luminance for each cell. The renderer derives character colors from these values, preserving the photograph's tonal direction.
 - `scripts/build-profile.mjs`: editable profile fields, colors, and layout.
@@ -45,7 +47,7 @@ The generator uses a disposable browser profile under the system temporary direc
 
 The SVGs contain selectable text, descriptions, and no scripts, external fonts, or external images. The README repeats the professional information in Markdown so the artwork is not the only way to read it.
 
-The mobile panel uses a 400 × 480 canvas with the portrait, display name, role and focus. Detailed fields and contact links remain in Markdown. Its portrait uses the same cells, tones and aspect ratio as the desktop version.
+The mobile panel uses a 400 × 480 canvas with the portrait, display name, role and focus. A 600 × 360 compact panel keeps larger text at intermediate viewport widths, where the full desktop panel would become difficult to read. Detailed fields and contact links remain in Markdown. All three portraits use the same cells, tones and aspect ratio.
 
 ## Updating professional information
 

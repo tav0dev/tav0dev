@@ -1,5 +1,6 @@
 <picture>
   <source media="(max-width: 600px)" srcset="./assets/profile-mobile.svg">
+  <source media="(max-width: 1100px)" srcset="./assets/profile-compact.svg">
   <img src="./assets/profile.svg" width="100%" alt="ASCII portrait of Gustavo de Oliveira. AI Engineer and co-founder at Outpost Technologies, based in São Paulo, Brazil.">
 </picture>
 
@@ -27,11 +28,13 @@ Developed integrations with the upstream [QM agent harness](https://github.com/y
 
 Built and delivered a clinic CRM connecting WhatsApp service, appointments, tasks and patient records. Implemented AI customer support, automated AMEVO read/write integration, and clinic automations with configurable response behavior, interaction history and scheduling/handoff alerts.
 
-**Bico — AI Product & Co-Founder**
+**Bico — Co-Founder**
 
-Built mobile product prototypes for independent professionals and small businesses with Expo / React Native, Flutter and Supabase. The product has **3 paying customers** and was selected for **Phase 2 of Centelha SP 3**.
+Co-founded and built a Flutter/Supabase product for micro and small businesses, connecting AI-assisted marketing, social publishing and customer follow-up. Implemented goal-based social post assistance, follow-up and birthday-message automations, and four automation cadences.
 
-[Expo source](https://github.com/tav0dev/bico) · [Flutter source](https://github.com/tav0dev/bico-flutter)
+The product has **3 paying customers** and was selected for **Phase 2 of Centelha SP 3**.
+
+[Product scope and contribution](./docs/bico-case.md) · [Flutter source](https://github.com/tav0dev/bico-flutter)
 
 **Compra Fácil — Technology & Product Partner**
 
