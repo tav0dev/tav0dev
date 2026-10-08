@@ -36,11 +36,11 @@ I'm Gustavo de Oliveira, an AI Engineer and co-founder at Outpost Technologies. 
 
 ## Compra Fácil
 
-**Technology & Product Partner · Jul 2026 – Present**
+**Co-Founder · Jul 2026 – Present**
 
 - **Contribution:** Lead product and technology for a local-commerce marketplace supporting orders and deliveries through app, WhatsApp and phone channels.
 - **Technology:** Flutter, Dart and Supabase in the application.
-- **Result / stage:** Operating with real orders and deliveries. Volume and growth metrics have not been collected.
+- **Result / stage:** Operating with real orders and deliveries; **250+ unique Android users** recorded in Google Play as of October 2026. This figure excludes iOS users and customers ordering through WhatsApp.
 
 [Public website source](https://github.com/tav0dev/compra-facil-site)
 

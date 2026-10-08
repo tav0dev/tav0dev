@@ -1,149 +1,134 @@
 <!doctype html>
 <html lang="en">
 <meta charset="utf-8">
-<title>Local photo to ASCII conversion</title>
+<title>Local portrait sampling</title>
 <pre id="result"></pre>
 <script>
   const photo = new Image();
   photo.onload = () => {
-    const columns = 160;
-    const rows = 110;
-    const tonalContrast = __TONAL_CONTRAST__;
-    const tonalMidpoint = __TONAL_MIDPOINT__;
-    const portraitTone = luma => Math.max(0, Math.min(255,
-      (luma - tonalMidpoint) * tonalContrast + tonalMidpoint));
-    const canvas = document.createElement('canvas');
-    canvas.width = columns;
-    canvas.height = rows;
-    const context = canvas.getContext('2d', { willReadFrequently: true });
-    // Remove only near-white pixels connected to the edge of the source crop.
-    // White highlights enclosed by the face stay visible rather than becoming holes.
+    const width = photo.naturalWidth;
+    const height = photo.naturalHeight;
     const source = document.createElement('canvas');
-    source.width = Math.round(photo.width * 0.76);
-    source.height = Math.round(photo.height * 0.87);
-    const sourceContext = source.getContext('2d', { willReadFrequently: true });
-    sourceContext.drawImage(photo, photo.width * 0.075, photo.height * 0.13,
-      photo.width * 0.76, photo.height * 0.87, 0, 0, source.width, source.height);
-    const imageData = sourceContext.getImageData(0, 0, source.width, source.height);
-    const sourcePixels = imageData.data;
-    // Bright forehead and nose highlights touch the white background in this
-    // photograph. Protect their interiors before flood-filling the background.
-    const protectedSkin = document.createElement('canvas');
-    protectedSkin.width = source.width;
-    protectedSkin.height = source.height;
-    const skinContext = protectedSkin.getContext('2d', { willReadFrequently: true });
-    const highlights = [
-      [[495, 260], [570, 233], [645, 235], [690, 252],
-        [710, 287], [729, 325], [743, 350], [718, 380], [605, 397], [496, 370]],
-      [[749, 394], [765, 411], [788, 436], [798, 451],
-        [799, 465], [777, 479], [741, 461], [738, 424]],
-    ];
-    for (const polygon of highlights) {
-      skinContext.beginPath();
-      polygon.forEach(([x, y], index) => {
-        const px = x / 1080 * photo.width - photo.width * 0.075;
-        const py = y / 1080 * photo.height - photo.height * 0.13;
-        if (index === 0) skinContext.moveTo(px, py);
-        else skinContext.lineTo(px, py);
-      });
-      skinContext.closePath();
-      skinContext.fill();
-    }
-    const protectedPixels = skinContext.getImageData(0, 0, source.width, source.height).data;
-    const background = new Uint8Array(source.width * source.height);
-    const queue = new Int32Array(background.length);
-    let start = 0;
-    let end = 0;
-    const enqueue = (index) => {
-      if (background[index]) return;
-      const p = index * 4;
-      if (protectedPixels[p + 3]) return;
-      const luma = 0.2126 * sourcePixels[p] + 0.7152 * sourcePixels[p + 1] + 0.0722 * sourcePixels[p + 2];
-      if (luma <= 247) return;
-      background[index] = 1;
-      queue[end++] = index;
-    };
-    for (let x = 0; x < source.width; x++) {
-      enqueue(x);
-      enqueue((source.height - 1) * source.width + x);
-    }
-    for (let y = 0; y < source.height; y++) {
-      enqueue(y * source.width);
-      enqueue(y * source.width + source.width - 1);
-    }
-    while (start < end) {
-      const index = queue[start++];
-      const x = index % source.width;
-      if (x > 0) enqueue(index - 1);
-      if (x < source.width - 1) enqueue(index + 1);
-      if (index >= source.width) enqueue(index - source.width);
-      if (index < background.length - source.width) enqueue(index + source.width);
-    }
-    for (let index = 0; index < background.length; index++) {
-      if (background[index]) sourcePixels[index * 4 + 3] = 0;
-    }
-    sourceContext.putImageData(imageData, 0, 0);
-    context.imageSmoothingQuality = 'high';
-    context.drawImage(source, 0, 0, columns, rows);
-    const pixels = context.getImageData(0, 0, columns, rows).data;
-    // Keep the connected subject; discard isolated background noise after sampling.
-    const components = new Int32Array(columns * rows);
-    const cells = new Int32Array(components.length);
+    source.width = width;
+    source.height = height;
+    const context = source.getContext('2d', { willReadFrequently: true });
+    context.drawImage(photo, 0, 0);
+    const image = context.getImageData(0, 0, width, height);
+    const pixels = image.data;
+    const luminance = offset =>
+      .2126 * pixels[offset] + .7152 * pixels[offset + 1] + .0722 * pixels[offset + 2];
+
+    // The supplied portrait has a white background. Find its largest nonwhite
+    // connected subject, without facial landmarks or photo-specific polygons.
+    const labels = new Int32Array(width * height);
+    const queue = new Int32Array(labels.length);
     let component = 0;
     let largest = 0;
     let largestSize = 0;
-    for (let seed = 0; seed < components.length; seed++) {
-      if (components[seed] || pixels[seed * 4 + 3] < 80) continue;
+    const isSubject = index => pixels[index * 4 + 3] > 0 && luminance(index * 4) < 240;
+    const neighbors = (index, visit) => {
+      const x = index % width;
+      if (x > 0) visit(index - 1);
+      if (x < width - 1) visit(index + 1);
+      if (index >= width) visit(index - width);
+      if (index < labels.length - width) visit(index + width);
+    };
+    for (let seed = 0; seed < labels.length; seed++) {
+      if (labels[seed] || !isSubject(seed)) continue;
       component++;
       let head = 0;
       let tail = 0;
-      const visit = (index) => {
-        if (components[index] || pixels[index * 4 + 3] < 80) return;
-        components[index] = component;
-        cells[tail++] = index;
+      const visit = index => {
+        if (labels[index] || !isSubject(index)) return;
+        labels[index] = component;
+        queue[tail++] = index;
       };
       visit(seed);
-      while (head < tail) {
-        const index = cells[head++];
-        const x = index % columns;
-        if (x > 0) visit(index - 1);
-        if (x < columns - 1) visit(index + 1);
-        if (index >= columns) visit(index - columns);
-        if (index < components.length - columns) visit(index + columns);
-      }
+      while (head < tail) neighbors(queue[head++], visit);
       if (tail > largestSize) {
         largestSize = tail;
         largest = component;
       }
     }
-    const ramp = ' .,:;i1tfLCG08@';
-    const luminance = new Float32Array(columns * rows);
-    for (let index = 0; index < luminance.length; index++) {
-      const p = index * 4;
-      luminance[index] = 0.2126 * pixels[p] + 0.7152 * pixels[p + 1] + 0.0722 * pixels[p + 2];
+    if (!largestSize) throw new Error('No subject found against the white background.');
+
+    // Flood only the exterior of that silhouette. Enclosed highlights retain
+    // their original pixels, so bright skin cannot turn into empty characters.
+    const outside = new Uint8Array(labels.length);
+    let head = 0;
+    let tail = 0;
+    const visitOutside = index => {
+      if (outside[index] || labels[index] === largest) return;
+      outside[index] = 1;
+      queue[tail++] = index;
+    };
+    for (let x = 0; x < width; x++) {
+      visitOutside(x);
+      visitOutside((height - 1) * width + x);
     }
-    const result = [];
-    const tones = [];
-    for (let y = 0; y < rows; y++) {
-      let line = '';
-      const rowTones = [];
-      for (let x = 0; x < columns; x++) {
-        const p = (y * columns + x) * 4;
-        const luma = luminance[y * columns + x];
-        // Light glyphs on a dark background need the original, positive tones.
-        // The previous inverse ramp made dark hair bright and washed out facial highlights.
-        const alpha = components[y * columns + x] === largest ? pixels[p + 3] / 255 : 0;
-        const density = Math.pow(Math.max(0, Math.min(1, (portraitTone(luma) - 20) / 225)), 0.8) * alpha;
-        const glyph = Math.round(density * (ramp.length - 1));
-        // Spaces belong to the background. Even the darkest retained subject
-        // cells get a dot so shadows cannot become empty holes in the portrait.
-        line += alpha === 0 ? ' ' : ramp[Math.max(1, glyph)];
-        rowTones.push(alpha === 0 ? 0 : Math.round(luma));
+    for (let y = 0; y < height; y++) {
+      visitOutside(y * width);
+      visitOutside(y * width + width - 1);
+    }
+    while (head < tail) neighbors(queue[head++], visitOutside);
+
+    let left = width, right = 0, top = height, bottom = 0;
+    for (let index = 0; index < outside.length; index++) {
+      if (outside[index]) {
+        pixels[index * 4 + 3] = 0;
+        continue;
       }
-      result.push(line);
-      tones.push(rowTones);
+      const x = index % width, y = Math.floor(index / width);
+      left = Math.min(left, x);
+      right = Math.max(right, x);
+      top = Math.min(top, y);
+      bottom = Math.max(bottom, y);
     }
-    document.getElementById('result').textContent = JSON.stringify({ rows: result, tones });
+    const padding = Math.round((right - left + 1) * .04);
+    left = Math.max(0, left - padding);
+    right = Math.min(width - 1, right + padding);
+    top = Math.max(0, top - padding);
+    bottom = Math.min(height - 1, bottom + padding);
+    const crop = { x: left, y: top, width: right - left + 1, height: bottom - top + 1 };
+    context.putImageData(image, 0, 0);
+
+    const font = { family: 'Liberation Mono, monospace', weight: 700, cellAspect: .6 };
+    const columns = 160;
+    const rows = Math.round(columns * crop.height / crop.width * font.cellAspect);
+    const sample = document.createElement('canvas');
+    sample.width = columns;
+    sample.height = rows;
+    const sampleContext = sample.getContext('2d', { willReadFrequently: true });
+    sampleContext.imageSmoothingQuality = 'high';
+    sampleContext.drawImage(source, crop.x, crop.y, crop.width, crop.height, 0, 0, columns, rows);
+    const sampled = sampleContext.getImageData(0, 0, columns, rows).data;
+    const tones = Array.from({ length: rows }, (_, y) =>
+      Array.from({ length: columns }, (_, x) => {
+        const offset = (y * columns + x) * 4;
+        return sampled[offset + 3] < 100 ? null : Math.round(
+          .2126 * sampled[offset] + .7152 * sampled[offset + 1] + .0722 * sampled[offset + 2]);
+      }));
+
+    // Measure actual glyph coverage: alphabetic order is not brightness order.
+    // The renderer combines this coverage with ink intensity to keep smooth tones.
+    const calibration = document.createElement('canvas');
+    calibration.width = 60;
+    calibration.height = 100;
+    const ink = calibration.getContext('2d', { willReadFrequently: true });
+    ink.font = `${font.weight} 100px ${font.family}`;
+    ink.fillStyle = '#fff';
+    const glyphs = [...'.,:;i1tfLCG08@'].map(char => {
+      ink.clearRect(0, 0, 60, 100);
+      ink.fillText(char, 0, 80);
+      const data = ink.getImageData(0, 0, 60, 100).data;
+      let coverage = 0;
+      for (let offset = 3; offset < data.length; offset += 4) coverage += data[offset] / 255;
+      return { char, coverage: Number((coverage / 6000).toFixed(8)) };
+    }).sort((a, b) => a.coverage - b.coverage);
+
+    document.getElementById('result').textContent = JSON.stringify({
+      version: 2, columns, rows, source: { width, height, crop }, font, glyphs, tones,
+    });
   };
   photo.src = '__PHOTO_DATA_URL__';
 </script>

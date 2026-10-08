@@ -1,6 +1,6 @@
 # Profile artwork and maintenance
 
-The profile uses a static SVG terminal panel with an ASCII portrait derived from Gustavo's supplied photograph. The English README contains the card, a brief introduction and three navigation links. The selected-work page connects AWS data engineering, the clinic CRM delivered at Neuronz and current product engineering at Outpost. Each project uses the same contribution, technology and result/stage fields. Descriptions were revised against the user's account, repository evidence and an authenticated review of the clinic CRM interface. Bico's three paying customers were confirmed by the user; Compra Fácil is described without unmeasured counts.
+The profile uses a static SVG terminal panel with an ASCII portrait derived from Gustavo's supplied photograph. The English README contains the card, a brief introduction and three navigation links. The selected-work page connects AWS data engineering, the clinic CRM delivered at Neuronz and current product engineering at Outpost. Each project uses the same contribution, technology and result/stage fields. Descriptions were revised against the user's account, repository evidence and an authenticated review of the clinic CRM interface. Bico's three paying customers and Compra Fácil's 250+ unique Android users were confirmed by the user. The latter count excludes iOS users and customers ordering through WhatsApp.
 
 ## Design references
 
@@ -8,9 +8,11 @@ The supplied screenshot shows [Andrew Grant's profile repository](https://github
 
 [Pretext](https://github.com/chenglou/pretext) is a JavaScript/TypeScript text measurement and layout library that can support DOM, Canvas, and SVG output. It could help with a more complex interactive composition. GitHub [sanitizes README HTML and removes scripts](https://github.com/github/markup), so an interactive React or Pretext demo would need its own page; it cannot execute inside the profile README.
 
-This composition has fixed columns and short fields, so it uses a small SVG generator without runtime dependencies. Canvas samples the photograph only when regenerating the portrait. The committed SVGs, ASCII text, and sampled tones are sufficient to rebuild the artwork without the original photo or a browser.
+This composition has fixed columns and short fields, so it uses a small SVG generator without runtime dependencies. Canvas samples the photograph only when changing the source. The committed tone samples, crop geometry and glyph calibration are sufficient to rebuild the ASCII text and SVGs without the original photo or a browser.
 
-The portrait uses a uniform conversion of the source photograph's luminance. A global contrast curve controls character density and ink brightness, separating darker eyes and beard from lighter skin. Bold character strokes improve readability at small display sizes. No regional contrast adjustment is applied to facial features. Its displayed aspect ratio matches the source crop. Background removal starts from near-white edge pixels; protection polygons tuned to the supplied photograph keep bright forehead and nose highlights from being removed where they touch the white background. Dark retained subject cells use at least a dot, and spaces are reserved for the background. Every visible character has an explicit horizontal position. SVG text position lists preserve spacing across color runs and reduce markup without changing the character grid. The display name uses Gustavo de Oliveira, his preferred professional name.
+The portrait was rebuilt from the corrected source, `references/profile_image (1).png`. The previous photograph's crop, highlight polygons and contrast settings are not used. Background removal finds the largest nonwhite connected subject and fills enclosed highlights, then derives a crop with a small margin. The grid and displayed aspect ratio follow that crop. There are no masks or contrast adjustments specific to eyes, nose, forehead or beard.
+
+The converter measures the ink coverage of each bold monospace character. One monotonic luminance curve controls the requested density; glyph coverage and ink brightness together reproduce it. Dark subject cells retain a visible dot, while spaces represent only the background. This avoids treating character order as brightness order or multiplying two independent contrast effects. Every visible character has an explicit horizontal position. SVG text position lists preserve spacing across color runs and reduce markup without changing the grid. The display name uses Gustavo de Oliveira, his preferred professional name.
 
 ## Files
 
@@ -21,8 +23,8 @@ The portrait uses a uniform conversion of the source photograph's luminance. A g
 - `docs/selected-work.md`: consistent project summaries, experience, education and certification links.
 - `docs/outpost-crm-case.md`: public architecture case with contribution, upstream attribution and integration stage.
 - `docs/bico-case.md`: current Flutter product, AI scope, version history and confirmed commercial outcome.
-- `assets/portrait.txt`: generated ASCII portrait, with 110 rows and up to 160 columns.
-- `assets/portrait-tones.json`: sampled source luminance for each cell. The renderer derives character colors from these values, preserving the photograph's tonal direction.
+- `assets/portrait.txt`: generated ASCII portrait, with 111 rows and up to 160 columns for the current source.
+- `assets/portrait-tones.json`: source luminance for each cell (`null` for background), source/crop dimensions, grid size, font settings and measured glyph coverage. The renderer derives both characters and ink from these samples.
 - `scripts/build-profile.mjs`: editable profile fields, colors, and layout.
 - `scripts/portrait.html`: local Canvas conversion used by the generator.
 - `docs/ats-review.md`: local Portuguese editorial review, excluded from publication.
@@ -37,10 +39,10 @@ Requires Node.js 18 or newer. No package installation is needed.
 node scripts/build-profile.mjs
 ```
 
-To change the portrait, also install Chromium or provide the executable path for a compatible browser. The current crop and highlight protection are tuned for the supplied square portrait; adjust them in `scripts/portrait.html` if using a different photo. If changing `tonalContrast` or `tonalMidpoint` in the generator, regenerate from the photo so character density and ink use the same curve.
+To change the portrait, also install Chromium and Liberation Mono, or provide the executable path for a compatible browser. Background removal expects a portrait on a white background; review the silhouette when using a different photo. The crop and row count are computed from the new subject. Changes to `portraitTone` in the generator can be rebuilt from saved samples without opening the original photo.
 
 ```sh
-node scripts/build-profile.mjs --photo references/1768696782714.png
+node scripts/build-profile.mjs --photo "references/profile_image (1).png"
 node scripts/build-profile.mjs --photo /path/to/photo.png --browser /path/to/chromium
 ```
 
